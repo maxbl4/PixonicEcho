@@ -41,7 +41,7 @@ namespace PixonicEcho
         protected override void OnDisconnected()
         {
             Dispose();
-            MyConsole.WriteLine("[Client {0}] Server dropped connection", Id);
+            Console.WriteLine("[Client {0}] Server dropped connection", Id);
         }
 
         public override void Dispose()

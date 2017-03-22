@@ -28,7 +28,7 @@ namespace PixonicEcho
 
         protected override void OnDisconnected()
         {
-            MyConsole.WriteLine("[NetReciever]: {0} disconnected", RemoteId);
+            Console.WriteLine("[NetReciever]: {0} disconnected", RemoteId);
         }
 
         protected  override void OnRecieveMessage(Message msg)

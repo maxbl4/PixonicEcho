@@ -39,7 +39,7 @@ namespace PixonicEcho
             lock (clients)
                 clients.Add(rcv);
             rcv.Start();
-            MyConsole.WriteLine($"accept connection");
+            Console.WriteLine($"accept connection");
         }
 
         public void ClientDisconnected(NetworkReciever client)
@@ -48,7 +48,7 @@ namespace PixonicEcho
             if (!clients.Remove(client))
                 return;
 
-            MyConsole.WriteLine($"{client.RemoteId} disconnected");
+            Console.WriteLine($"{client.RemoteId} disconnected");
         }
 
         public Room GetOrAddRoom(string name)
@@ -77,7 +77,7 @@ namespace PixonicEcho
                         (k, v) => (DateTime.Now - v.LastMessage).TotalMilliseconds > Settings.RoomLifeTimeoutMs, out r))
                     {
                         r.Online = false;
-                        MyConsole.WriteLine($"[Server]: Removed room {staticRoom.Name} due to inactivity");
+                        Console.WriteLine($"[Server]: Removed room {staticRoom.Name} due to inactivity");
                     }
                 }
             }
