@@ -102,13 +102,13 @@ namespace PixonicEcho
             }
         }
 
-        protected void Disconnect()
+        private void Disconnect()
         {
             stream.Close();
             OnDisconnected();
         }
 
-        public async void SendMessage(Message msg)
+        protected async void SendMessage(Message msg)
         {
             const int bufferSize = 1000;
             const int headerSize = 5;

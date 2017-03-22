@@ -58,10 +58,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClientRecord.cs" />
     <Compile Include="DictionaryExtensions.cs" />
-    <Compile Include="MemoryClient.cs" />
-    <Compile Include="MemoryEchoServer.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="MessageType.cs" />
     <Compile Include="MyConsole.cs" />
