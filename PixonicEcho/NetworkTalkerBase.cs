@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 
@@ -7,6 +10,8 @@ namespace PixonicEcho
 {
     abstract class NetworkTalkerBase : IDisposable
     {
+        const int headerSize = 5;
+        private const int bufferSize = 8000;
         private TcpClient client;
         private NetworkStream stream;
         #region Equality
@@ -108,21 +113,55 @@ namespace PixonicEcho
             OnDisconnected();
         }
 
+        bool SerializeMessage(Message msg, byte[] buffer, ref int offset)
+        {
+            var msgLength = headerSize + Encoding.UTF8.GetByteCount(msg.Data);
+            if (msgLength > buffer.Length - offset) return false;
+            Encoding.UTF8.GetBytes(msg.Data, 0, msg.Data.Length, buffer, offset + headerSize);
+            buffer[offset + 0] = (byte)msg.Type;
+            buffer[offset + 1] = (byte)(msgLength >> 8);
+            buffer[offset + 2] = (byte)(msgLength);
+            buffer[offset + 3] = (byte)(msg.From >> 8);
+            buffer[offset + 4] = (byte)(msg.From);
+
+            offset += msgLength;
+            return true;
+        }
+
+        protected async void SendBulk(IList<Message> messages)
+        {
+            if (messages.Count == 0) return;
+            var buffer = new byte[bufferSize];
+            var totalSent = 0;
+            do
+            {
+                var offset = 0;
+                var serializedCount = messages.Skip(totalSent)
+                    .TakeWhile(x => SerializeMessage(x, buffer, ref offset))
+                    .Count();
+                totalSent += serializedCount;
+                if (serializedCount == 0)
+                    throw new ArgumentOutOfRangeException("Message data too big. It should not exceed 3997 chars.");
+                try
+                {
+                    await stream.WriteAsync(buffer, 0, offset);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex);
+                }
+            } while (totalSent < messages.Count);
+        }
+
         protected async void SendMessage(Message msg)
         {
-            const int bufferSize = 1000;
-            const int headerSize = 5;
             var buffer = new byte[bufferSize];
-            var msgLength = headerSize + Encoding.UTF8.GetBytes(msg.Data, 0, msg.Data.Length, buffer, headerSize);
-
-            buffer[0] = (byte)msg.Type;
-            buffer[1] = (byte)(msgLength >> 8);
-            buffer[2] = (byte)(msgLength);
-            buffer[3] = (byte)(msg.From >> 8);
-            buffer[4] = (byte)(msg.From);
+            var offset = 0;
+            if (!SerializeMessage(msg, buffer, ref offset))
+                throw new ArgumentOutOfRangeException("Message data too big. It should not exceed 3997 chars.");
             try
             {
-                await stream.WriteAsync(buffer, 0, msgLength);
+                await stream.WriteAsync(buffer, 0, offset);
             }
             catch (Exception ex)
             {

@@ -40,9 +40,26 @@ namespace PixonicEcho
                     MyConsole.WriteLine("[Server]: rcv from {0} {1} {2}", RemoteId, msg.Type, msg.Data);
                     var room = server.GetOrAddRoom(msg.Data);
                     Room = room;
-                    Subscription =
-                        room.Subject.Where(x => x.From != RemoteId)
-                            .Subscribe(SendMessage);
+                    if (Settings.UseServerSendBuffering)
+                    {
+                        Subscription =
+                            room.Subject.Where(x => x.From != RemoteId)
+                            .Buffer(TimeSpan.FromMilliseconds(20))
+                                .Subscribe(x => {
+                                               Interlocked.Add(ref PerfCounters.MessagesSentFromServer, x.Count);
+                                               SendBulk(x);
+                                           });
+                    }
+                    else
+                    {
+                        Subscription =
+                            room.Subject.Where(x => x.From != RemoteId)
+                                .Subscribe(x => 
+                                {
+                                    Interlocked.Increment(ref PerfCounters.MessagesSentFromServer);
+                                    SendMessage(x);
+                                });
+                    }
                     break;
                 case MessageType.Echo:
                     if (!Room.Online) Dispose();

@@ -7,6 +7,7 @@ namespace PixonicEcho
     {
         public static long MessagesRecievedOnServer;
         public static long MessagesSentFromClient;
+        public static long MessagesSentFromServer;
         public static long MessagesRecievedOnClient;
         private static long lastMessages;
         private static Timer timer;
