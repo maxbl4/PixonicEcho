@@ -65,6 +65,9 @@
     <Compile Include="Message.cs" />
     <Compile Include="MessageType.cs" />
     <Compile Include="MyConsole.cs" />
+    <Compile Include="NetworkClient.cs" />
+    <Compile Include="NetworkReciever.cs" />
+    <Compile Include="NetworkTalkerBase.cs" />
     <Compile Include="PerfCounters.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

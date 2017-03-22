@@ -52,9 +52,13 @@ namespace PixonicEcho
             {
                 if ((DateTime.Now - staticRoom.LastMessage).TotalMilliseconds > Settings.RoomLifeTimeoutMs)
                 {
-                    if (rooms.RemoveWhereSync(staticRoom.Name, 
-                        (k,v) => (DateTime.Now - v.LastMessage).TotalMilliseconds > Settings.RoomLifeTimeoutMs))
+                    Room r;
+                    if (rooms.RemoveWhereSync(staticRoom.Name,
+                        (k, v) => (DateTime.Now - v.LastMessage).TotalMilliseconds > Settings.RoomLifeTimeoutMs, out r))
+                    {
+                        r.Online = false;
                         MyConsole.WriteLine($"[Server]: Removed room {staticRoom.Name} due to inactivity");
+                    }
                 }
             }
         }

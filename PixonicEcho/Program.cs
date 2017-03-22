@@ -19,6 +19,7 @@ namespace PixonicEcho
                 return;
             }
             NetworkServer netServer;
+            NetworkClient netClient;
             switch (args[0].ToLowerInvariant())
             {
                 case "memory":
@@ -48,6 +49,7 @@ namespace PixonicEcho
                     netServer.Run();
                     var nc1 = new NetworkClient();
                     nc1.Start("Room 1");
+                    Thread.Sleep(200);
                     var nc2 = new NetworkClient();
                     nc2.Start("Room 1");
                     Console.ReadLine();
@@ -57,11 +59,20 @@ namespace PixonicEcho
                     Console.ReadLine();
                     break;
                 case "server":
+                    Console.WriteLine("This is SERVER");
                     netServer = new NetworkServer();
                     netServer.Run();
                     Console.ReadLine();
                     break;
                 case "client":
+                    if (args.Length < 2)
+                    {
+                        Console.WriteLine("Specify room name: client <room>");
+                        return;
+                    }
+                    netClient = new NetworkClient();
+                    netClient.Start(args[1]);
+                    Console.ReadLine();
                     break;
             }
         }

@@ -16,6 +16,7 @@ namespace PixonicEcho
         }
 
         public string Name { get; }
+        public bool Online { get; set; } = true;
 
         public Subject<Message> Subject { get; }
         public DateTime LastMessage { get; private set; }

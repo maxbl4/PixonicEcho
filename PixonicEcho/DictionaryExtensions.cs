@@ -46,11 +46,11 @@ namespace PixonicEcho
             }
         }
 
-        public static bool RemoveWhereSync<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, Func<TKey, TValue, bool> condition)
+        public static bool RemoveWhereSync<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, Func<TKey, TValue, bool> condition, out TValue value)
         {
             lock (dict)
             {
-                TValue value;
+                value = default (TValue);
                 if (dict.TryGetValue(key, out value) && condition(key, value))
                 {
                     dict.Remove(key);
