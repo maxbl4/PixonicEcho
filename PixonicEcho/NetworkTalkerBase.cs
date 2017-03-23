@@ -10,8 +10,9 @@ namespace PixonicEcho
 {
     abstract class NetworkTalkerBase : IDisposable
     {
-        const int headerSize = 5;
+        const int headerSize = 9;
         private const int bufferSize = 8000;
+        const int maxDataLength = (bufferSize - headerSize) / 2;
         private TcpClient client;
         private NetworkStream stream;
         #region Equality
@@ -63,8 +64,6 @@ namespace PixonicEcho
 
         async void RecieveAsync()
         {
-            const int bufferSize = 1000;
-            const int headerSize = 5;
             byte[] buffer = new byte[bufferSize];
             var read = 0;
             while (true)
@@ -87,11 +86,14 @@ namespace PixonicEcho
                         var messageType = (MessageType)buffer[0];
                         var length = (buffer[1] << 8) + buffer[2];
                         var from = (buffer[3] << 8) + buffer[4];
+                        var dataHash = (buffer[5] << 24) + (buffer[6] << 16) + (buffer[7] << 8) + buffer[8];
                         while (read < length)
                         {
                             read += await stream.ReadAsync(buffer, read, length - read);
                         }
                         var data = Encoding.UTF8.GetString(buffer, headerSize, length - headerSize);
+                        if (data.GetHashCode() != dataHash)
+                            throw new Exception($"Hashcode check failed on data. Data '{data}', computed hash {data.GetHashCode()}, transmitted hash {dataHash}");
                         var msg = new Message { From = from, Type = messageType, Data = data };
                         OnRecieveMessage(msg);
 
@@ -115,14 +117,21 @@ namespace PixonicEcho
 
         bool SerializeMessage(Message msg, byte[] buffer, ref int offset)
         {
+            if (msg.Data.Length > maxDataLength)
+                throw new ArgumentOutOfRangeException($"Message data too big. It should not exceed {maxDataLength} chars.");
             var msgLength = headerSize + Encoding.UTF8.GetByteCount(msg.Data);
             if (msgLength > buffer.Length - offset) return false;
             Encoding.UTF8.GetBytes(msg.Data, 0, msg.Data.Length, buffer, offset + headerSize);
+            var dataHash = msg.Data.GetHashCode();
             buffer[offset + 0] = (byte)msg.Type;
             buffer[offset + 1] = (byte)(msgLength >> 8);
             buffer[offset + 2] = (byte)(msgLength);
             buffer[offset + 3] = (byte)(msg.From >> 8);
             buffer[offset + 4] = (byte)(msg.From);
+            buffer[offset + 5] = (byte)(dataHash >> 24);
+            buffer[offset + 6] = (byte)(dataHash >> 16);
+            buffer[offset + 7] = (byte)(dataHash >> 8);
+            buffer[offset + 8] = (byte)(dataHash);
 
             offset += msgLength;
             return true;
@@ -141,7 +150,7 @@ namespace PixonicEcho
                     .Count();
                 totalSent += serializedCount;
                 if (serializedCount == 0)
-                    throw new ArgumentOutOfRangeException("Message data too big. It should not exceed 3997 chars.");
+                    throw new ArgumentOutOfRangeException($"Message data too big. It should not exceed {maxDataLength} chars.");
                 try
                 {
                     await stream.WriteAsync(buffer, 0, offset);
@@ -158,7 +167,7 @@ namespace PixonicEcho
             var buffer = new byte[bufferSize];
             var offset = 0;
             if (!SerializeMessage(msg, buffer, ref offset))
-                throw new ArgumentOutOfRangeException("Message data too big. It should not exceed 3997 chars.");
+                throw new ArgumentOutOfRangeException($"Message data too big. It should not exceed {maxDataLength} chars.");
             try
             {
                 await stream.WriteAsync(buffer, 0, offset);
