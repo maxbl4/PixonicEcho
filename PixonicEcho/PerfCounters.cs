@@ -10,6 +10,7 @@ namespace PixonicEcho
         public static long MessagesSentFromServer;
         public static long MessagesRecievedOnClient;
         private static long lastMessages;
+        private static long lastServerMessages;
         private static Timer timer;
 
         public static void Monitor()
@@ -19,11 +20,13 @@ namespace PixonicEcho
 
         private static void CheckCounters(object state)
         {
-            var curMsg = MessagesRecievedOnServer;
-            var delta = curMsg - lastMessages;
-            lastMessages = curMsg;
-            Console.WriteLine($"Sent from client {MessagesSentFromClient}, Recieved on server {MessagesRecievedOnServer}, Recieved on client {MessagesRecievedOnClient}");
-            Console.WriteLine($"{delta}/s {curMsg}");
+            var msgServer = MessagesRecievedOnServer + MessagesSentFromServer;
+            var deltaServer = msgServer - lastServerMessages;
+            lastServerMessages = msgServer;
+            var msgClient = MessagesRecievedOnClient + MessagesSentFromClient;
+            var deltaClient = msgClient - lastMessages;
+            lastMessages = msgClient;
+            Console.WriteLine("Throughput: Client {0}/s ({1}), Server {2}/s ({3})", deltaClient, msgClient, deltaServer, msgServer);
         }
     }
 }
